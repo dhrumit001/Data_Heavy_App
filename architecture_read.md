@@ -212,28 +212,14 @@ Restrictions
 ❌ Must be read-only (no inserts/updates)
 
 ✅ Summary Diagram
-                              ┌────────────────────────┐
-                              │      Application       │
-                              │   (Thin Orchestration) │
-                              └────────────┬───────────┘
-                                           │
-                                           ▼
-                               ┌───────────────────────┐
-                               │     Use-Case SPs      │
-                               │   (Workflows Layer)   │
-                               └────────┬──────┬───────┘
-                                        │      │
-                                        │      │
-                        ┌───────────────┘      └───────────────┐
-                        ▼                                        ▼
-            ┌────────────────────────┐             ┌────────────────────────┐
-            │   Shared Business SPs  │             │       Common SPs       │
-            │ (Reusable Domain Rules)│             │   (Technical CRUD)     │
-            └────────────────────────┘             └────────────────────────┘
+                            flowchart TD
 
-                          ┌────────────────────────────────────────┐
-                          │               UI SPs                   │
-                          │      (Read-Only Query Layer)           │
-                          └────────────────────────────────────────┘
+    A[Application Layer] --> B[Use-Case SPs<br>(Workflow Layer)]
+
+    B --> C[Shared Business SPs<br>(Reusable Domain Rules)]
+    B --> D[Common SPs<br>(Technical CRUD)]
+
+    UI[UI SPs<br>(Read-Only)] ---> D
+
 
 
