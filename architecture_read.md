@@ -211,15 +211,6 @@ Restrictions
 
 ❌ Must be read-only (no inserts/updates)
 
-✅ Summary Diagram
-                            flowchart TD
-
-    A[Application Layer] --> B[Use-Case SPs<br>(Workflow Layer)]
-
-    B --> C[Shared Business SPs<br>(Reusable Domain Rules)]
-    B --> D[Common SPs<br>(Technical CRUD)]
-
-    UI[UI SPs<br>(Read-Only)] ---> D
 
 
 
