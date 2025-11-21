@@ -1,34 +1,24 @@
-📘 Architecture Documentation
-Transactional Script + DB-Centric Domain Logic + SQL Modularization
+# 📘 Architecture Documentation
+### Transactional Script + DB-Centric Domain Logic + SQL Modularization
 
 This project follows a database-centric enterprise architecture using:
 
 Transactional Script (Application Layer)
-
 DB-Centric Domain Logic (Business Rules in SQL)
-
 SQL Modularization (Layered Stored Procedures)
 
 ## 1. 🔵 Transactional Script (Application Layer Pattern)
-
 Each business use case is executed as one sequential procedure (method or stored procedure).
 
 ✔ Characteristics
-
 One use case = One function / One stored procedure
-
 Logic flows top-down (step → step → step)
-
 Very easy to understand
-
 Ideal for CRUD + procedural logic
-
 No DDD entities/aggregates/models
 
 Notes
-
 The stored procedure contains the entire workflow.
-
 This refers to the pattern, not the implementation location.
 
 ## 2. 🔴 DB-Centric Domain Logic (Business Rules in SQL)
