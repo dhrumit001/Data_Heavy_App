@@ -1,158 +1,234 @@
-We use below architectures on this project.
+📘 Architecture Documentation
+Transactional Script + DB-Centric Domain Logic + SQL Modularization
 
-## 📌 Transactional Script + DB-Centric Domain Logic + SQL Modularization
+This project follows a database-centric enterprise architecture using:
 
-🔵 1. Transactional Script (Application Layer Pattern)
-Each business use-case is implemented as a single procedure (method/SP) that executes steps in sequence.
+Transactional Script (Application Layer)
+
+DB-Centric Domain Logic (Business Rules in SQL)
+
+SQL Modularization (Layered Stored Procedures)
+
+## 1. 🔵 Transactional Script (Application Layer Pattern)
+
+Each business use case is executed as one sequential procedure (method or stored procedure).
 
 ✔ Characteristics
+
 One use case = One function / One stored procedure
+
 Logic flows top-down (step → step → step)
+
 Very easy to understand
-Perfect for CRUD + procedural business rules
-No entities, aggregates, or domain models
 
-Each SP contains the entire workflow from start to finish.
-This is the pattern, not the implementation location.
+Ideal for CRUD + procedural logic
 
-🔴 2. DB-Centric Domain Logic (Where Business Rules Live)
-✔ Your business rules live inside SQL, not in C# code.
-All core domain logic is executed in stored procedures:
-For ex : Validate balance,Apply markup,Decide provider,Calculate fees,Reverse ledger
+No DDD entities/aggregates/models
 
-This makes the database the domain layer.
+Notes
 
-✔ Why?
-Because:
-Multiple systems can reuse it
-SQL provides consistency
-SQL is optimized for data-heavy operations
-Easier to guarantee ACID consistency
-Application layer becomes thin/orchestration only
+The stored procedure contains the entire workflow.
 
-❌ This is NOT DDD
-Because DDD requires domain logic inside classes (entities/value objects).
-Here, domain logic is in the DB.
+This refers to the pattern, not the implementation location.
 
-This is a classic enterprise approach.
+## 2. 🔴 DB-Centric Domain Logic (Business Rules in SQL)
 
-🟢 3. SQL Modularization (How SQL is Organized)
-This means breaking SQL into layers so it is not spaghetti logic.
+All core business rules are implemented inside the SQL database rather than C#.
 
+✔ Benefits
 
-## Let's deep dive into SQL Modularization Architecture (Deep Explanation)
-Your stored procedures are organized into 4 Layers:
-1️⃣ Common SPs (Pure CRUD / Utilities)
-2️⃣ Shared Business SPs (Reusable business rules)
-3️⃣ Use-Case SPs (Transactional scripts / workflows)
-4️⃣ UI SPs (Reporting / Listing optimized for UI)
+Multiple systems can reuse business rules
 
-🟦 1️⃣ Common SPs — “Technical layer”
+SQL guarantees consistency and ACID
+
+Optimized for data-heavy operations
+
+Application layer becomes thin (orchestration only)
+
+❌ Not DDD
+
+DDD places logic in entities/value objects inside code.
+Here, SQL = domain layer → classic enterprise approach.
+
+## 3. 🟢 SQL Modularization (Structured SQL Architecture)
+
+SQL is organized into 4 layers to avoid spaghetti logic:
+
+Common SPs
+
+Shared Business SPs
+
+Use-Case SPs (Transactional Scripts)
+
+UI SPs (Read-only Query SPs)
+
+# 🔍 Deep Dive into SQL Modularization Architecture
+## 1️⃣ 🟦 Common SPs — “Technical Layer”
 Purpose
-Reusable CRUD operations
-NO business rules.
-Pure data access.
+
+Reusable technical CRUD operations
+
+No business rules
 
 Examples
+
 usp_Common_GetCustomerById
+
 usp_Common_GetBalance
+
 usp_Common_InsertAuditLog
+
 usp_Common_UpdateStatus
+
 usp_Common_InsertLedgerEntry
 
 Allowed Calls
-Caller	    Allowed?	         Why
-Application	✔ Allowed	Simple   CRUD
-Common SP	  ✔ Allowed	Shared   utilities
-Shared SP	  ✔ Allowed	Reusable logic
-Use-case SP	✔ Allowed	Building blocks
-UI SP	      ✔ Allowed	         Data fetch only
+Caller	Allowed?	Why
+Application	✔ Yes	Basic CRUD
+Common SP	✔ Yes	Shared utilities
+Shared SP	✔ Yes	Reusable logic
+Use-case SP	✔ Yes	Workflow building blocks
+UI SP	✔ Yes	Data fetching
+Restrictions
 
-Please note this SP is not call any other sp aprart from Common SPs.
+Common SPs must not call any other SP except Common SPs
+(to avoid circular dependency)
 
-🟩 2️⃣ Shared Business SPs — “Reusable domain logic”
+## 2️⃣ 🟩 Shared Business SPs — “Reusable Domain Logic”
 Purpose
-Contains business rules that are used in multiple use-cases.
+
+Shared reusable business rules used by multiple use cases.
 
 Examples
+
 usp_Shared_ValidateBalance
+
 usp_Shared_CalculateFees
+
 usp_Shared_ValidateKYC
+
 usp_Shared_ApplyPromoCode
+
 usp_Shared_GetCommissionRate
 
 Allowed Calls
-Caller	   Allowed?	   Why
-Common SP	 ❌          NO	Prevent circular dependency
-Shared SP	 ✔ Yes	      Reuse
-Use-case SP	✔Yes	      Orchestrates use case
-Application	❌ Avoid	  It exposes business rule directly
-UI SP	      ❌ Avoid	  UI should not apply domain logic
+Caller	Allowed?	Why
+Common SP	❌ No	Prevent circular dependency
+Shared SP	✔ Yes	Reuse logic
+Use-case SP	✔ Yes	Orchestrate workflow
+Application	❌ No	Should not expose domain logic
+UI SP	❌ No	UI must not apply business rules
+Rules
 
-Not Allowed
-❌ Cannot call Use-Case SP
-❌ Not meant to be called directly by UI or application
-❌ Must NOT modify data (except safe writes like logs)
+Cannot call Use-Case SP
 
-These SPs return:
-Valid/invalid
-Fee amount
-Discount
-Flags
-Calculated values
+Not meant for UI or external calls
 
-🟥 3️⃣ Use-Case SPs — “Complete workflows / Transaction Scripts”
-This is the heart of the architecture.
+Should not modify data (except safe logs)
+
+Returns validations, flags, calculated values
+
+## 3️⃣ 🟥 Use-Case SPs — “Transactional Scripts (Main Workflows)”
+
+These implement one complete business workflow from start to finish.
 
 Purpose
-Implements one business use-case, top-to-bottom.
+
+Implements the full use case
+
+Sequential top-down logic
+
+Transactional consistency
 
 Examples
+
 usp_Usecase_ProcessElectricityPayment
+
 usp_Usecase_TopupWallet
+
 usp_Usecase_TransferFunds
+
 usp_Usecase_CreateOrder
+
 usp_Usecase_IssueRefund
 
 Allowed Calls
-Caller	     Allowed?	Why
-Application	 ✔ Yes	  Use case execution
-Shared SP	   ✔ Yes	  Reusable business rules
-Common SP	   ✔ Yes	  CRUD operations
+Caller	Allowed?	Why
+Application	✔ Yes	Triggers use case
+Shared SP	✔ Yes	Reusable domain rules
+Common SP	✔ Yes	CRUD operations
+Restrictions
 
-Not Allowed
-❌ Use-case SP cannot be called by another use-case SP
-❌ Use-case SP cannot call UI SP
-❌ Use-case SP must not be reused for other workflows
-❌ Use-case SP cannot be “common”
+❌ Cannot call another Use-Case SP
 
+❌ Cannot call UI SP
 
-🟨 4️⃣ UI SPs — “Query-Optimized for UI & Reports”
-These are NOT business logic SPs.
-They exist only to shape data for the UI screens.
+❌ Must NOT be reused for other workflows
+
+❌ Not allowed to become shared/common
+
+Each use case = independent workflow.
+
+## 4️⃣ 🟨 UI SPs — “Query-Optimized SPs for Screens/Reports”
+
+These SPs are read-only and contain no business logic.
 
 Purpose
-Pagination
-Sorting
+
 Filtering
+
+Pagination
+
+Sorting
+
 Aggregated reporting
-Dashboard data
-List screens
+
+Dashboard / UI optimized queries
 
 Examples
+
 usp_UI_GetTransactionList
+
 usp_UI_GetSalesSummary
+
 usp_UI_GetWalletHistory
+
 usp_UI_GetCustomerDashboard
+
 usp_UI_GetInvoiceDetails
 
 Allowed Calls
-Caller	    Allowed?	Why
-Application	✔ Yes	    UI pages call these
-Common SP	  ✔ Yes	    If required
+Caller	Allowed?	Why
+Application	✔ Yes	Fetch UI data
+Common SP	✔ Yes	Shared data access
+Restrictions
 
-Not Allowed
-❌ Cannot call Use-case SP (workflow)
-❌ Cannot call Shared Business SP (business logic)
+❌ Cannot call Use-case SP
+
+❌ Cannot call Shared Business SP
+
 ❌ Cannot contain business rules
-❌ Cannot be used for updates (UI SP = read-only)
+
+❌ Must be read-only (no inserts/updates)
+
+✅ Summary Diagram
+                ┌────────────────────────┐
+                │      Application       │
+                │   (Thin Orchestration) │
+                └───────────┬────────────┘
+                            │
+                            ▼
+                  ┌──────────────────┐
+                  │  Use-Case SPs    │  (Workflows)
+                  └──────┬─────┬─────┘
+                         │     │
+          ┌──────────────┘     └───────────────┐
+          ▼                                     ▼
+┌────────────────────┐              ┌────────────────────┐
+│ Shared Business SPs │              │    Common SPs      │
+│  (Reusable Rules)   │              │  (CRUD Utilities)   │
+└────────────────────┘              └────────────────────┘
+
+               ┌────────────────────┐
+               │       UI SPs       │  (Read-Only)
+               └────────────────────┘
