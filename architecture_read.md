@@ -212,7 +212,7 @@ Restrictions
 ❌ Must be read-only (no inserts/updates)
 
 ✅ Summary Diagram
-                ┌────────────────────────┐
+                 ┌────────────────────────┐
                 │      Application       │
                 │   (Thin Orchestration) │
                 └───────────┬────────────┘
